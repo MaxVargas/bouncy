@@ -1,0 +1,8 @@
+[package]
+name = "hotdog"
+version = "0.1.0"
+authors = ["maxvarga <mxvrgs@gmail.com>"]
+edition = "2021"
+
+[dependencies]
+nannou = "0.19"
