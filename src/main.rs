@@ -6,7 +6,7 @@ fn main() {
 
 struct Model {
     _window: window::Id,
-    point: Point,
+    points: Vec<Point>,
 }
 
 struct Point {
@@ -30,10 +30,10 @@ fn model(app: &App) -> Model {
     let y0 = random_range(boundary.top(), boundary.bottom()/2.0);
     Model { 
         _window: _window, 
-        point: Point{
+        points: vec![Point{
             x: x0, y: y0,
             vx: 0.0, vy: 0.0,
-        }
+        }]
     }
 }
 
@@ -43,18 +43,18 @@ fn bounce(app: &App, model: &mut Model, dim: Dim) {
     let by = (boundary.top() + boundary.bottom())/2.0;
 
     match dim {
-        Dim::X => if (model.point.vx) * (model.point.x - bx) > 0.0 {
-            model.point.vx = -1.0 * model.point.vx;
+        Dim::X => if (model.points[0].vx) * (model.points[0].x - bx) > 0.0 {
+            model.points[0].vx = -1.0 * model.points[0].vx;
         }
-        Dim::Y => if (model.point.vy) * (model.point.y - by) > 0.0 {
-            model.point.vy = -1.0 * model.point.vy;
+        Dim::Y => if (model.points[0].vy) * (model.points[0].y - by) > 0.0 {
+            model.points[0].vy = -1.0 * model.points[0].vy;
         }
     }
 }
 
 fn in_bounds(app: &App, model: &Model) -> Option<Dim> {
     let boundary = app.window_rect();
-    let Point{ x, y, vx: _, vy: _ } = model.point;
+    let Point{ x, y, vx: _, vy: _ } = model.points[0];
     if (x < boundary.left()) || (x > boundary.right()) {
         return Some(Dim::X);
     }
@@ -70,10 +70,10 @@ fn update(app: &App, model: &mut Model, _update: Update) {
     let dx = random_range(-0.1, 0.1);
     let dy = random_range(-0.1, 0.1);
 
-    model.point.x += model.point.vx;
-    model.point.y += model.point.vy;
-    model.point.vx += dx;
-    model.point.vy += dy;
+    model.points[0].x += model.points[0].vx;
+    model.points[0].y += model.points[0].vy;
+    model.points[0].vx += dx;
+    model.points[0].vy += dy;
 
     match in_bounds(app,model) {
         Some(dim) => bounce(app, model, dim),
@@ -89,7 +89,7 @@ fn view(app: &App, model: &Model, frame: Frame) {
     draw.background().color(PLUM);
 
     // Draw a blue ellipse at the x/y coordinates
-    draw.ellipse().color(STEELBLUE).x_y(model.point.x, model.point.y);
+    draw.ellipse().color(STEELBLUE).x_y(model.points[0].x, model.points[0].y);
 
     draw.to_frame(app, &frame).unwrap();
 }
