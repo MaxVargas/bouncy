@@ -1,5 +1,4 @@
 use nannou::prelude::*;
-use libm::*;
 
 fn main() {
     nannou::app(model).update(update).run();
@@ -35,7 +34,7 @@ impl Particle {
     fn new_rand(x_min: f32, x_max: f32, y_min: f32, y_max: f32) -> Self {
         let x = random_range(x_min, x_max);
         let y = random_range(y_min, y_max/2.0);
-        let r = random_range(10.0, 50.0);
+        let r = random_range(30.0, 60.0);
 
         Particle::new(
             x, y,
@@ -54,58 +53,77 @@ impl Particle {
     }
     fn smash(&mut self, particle: &mut Particle) {
         // finds scattering angles in two-dimensional (elastic) collision
-        // https://ocw.mit.edu/courses/8-01sc-classical-mechanics-fall-2016/mit8_01scs22_chapter15.pdf
-        // 
-        let angle1 = self.movement_angle();
-        let angle2 = particle.movement_angle();
-        let v1 = self.speed();
-        let v2 = particle.speed();
         let m1 = self.mass();
         let m2 = particle.mass();
 
-        let contact_angle = 0.0;
+        let v1 = vec![self.vx, self.vy];
+        let x1 = vec![self.x, self.y];
+        let v2 = vec![particle.vx, particle.vy];
+        let x2 = vec![particle.x, particle.y];
 
-        (self.vx, self.vy) = ugly(m1,m2,v1,v2,angle1,angle2,contact_angle);
-        (particle.vx, particle.vy) = ugly(m2,m1,v2,v1,angle2,angle1,contact_angle);
-    }
-    //fn energy(&self) -> f32 {
-    //    // factor of 2 is not important...
-    //    let v2 = self.vx.pow(2) + self.vy.pow(2);
-    //    let m = self.mass();
-    //    m*v2
-    //}
-    //fn momentum(&self) -> Vec<f32> {
-    //    let m = self.mass();
-    //    let mv = vec![m * self.vx, m *self.vy];
-    //    mv
-    //}
-    fn speed(&self) -> f32 {
-        ((self.vx.pow(2) + self.vy.pow(2)) as f32).pow(0.5)
-    }
-    fn movement_angle(&self) -> f32 {
-        atan2(self.x.into(), self.y.into()) as f32
+        let v1_new = eval(&v1,&v2,&x1,&x2,m1,m2);
+        let v2_new = eval(&v2,&v1,&x2,&x1,m2,m1);
+
+        self.vx = v1_new[0];
+        self.vy = v1_new[1];
+        particle.vx = v2_new[0];
+        particle.vy = v2_new[1];
+
     }
     fn mass(&self) -> f32 {
         self.radius.pow(2) / (100.0 as f32)
     }
 }
 
-fn ugly(
-    m1: f32, m2: f32, 
-    v1: f32, v2: f32, 
-    angle1: f32, angle2: f32, 
-    contact_angle: f32
-) -> (f32, f32) {
-    let fraction = (v1 * cosf(angle1 - contact_angle) * (m1 - m2) + 2.0 * m2 * v2 * cosf(angle2 - contact_angle));
-    let a = cosf(contact_angle) * fraction;
-    let b = v1 * sinf(angle1 - contact_angle) * cosf(contact_angle + PI/2.0);
-    let vx = a+b;
+fn eval(
+    v1: &Vec<f32>, v2: &Vec<f32>, 
+    x1: &Vec<f32>, x2: &Vec<f32>, 
+    m1: f32, m2: f32
+) -> Vec<f32> {
+    let a = (2.0 * m2) / (m1 + m2);
+    let b = dot(&sub(&v1,&v2),&sub(&x1,&x2))/(norm(&sub(&x2,&x1)).pow(2));
+    let c = scale(&sub(&x1,&x2), a*b);
 
-    let c = sinf(contact_angle) * fraction;
-    let d = v1 * sinf(angle1 - contact_angle) * sinf(contact_angle + PI/2.0);
-    let vy = c+d;
+    sub(v1, &c)
+}
 
-    (vx, vy)
+// TODO: clean this up by creating some vec2d type
+// which implements addition, dot product, normalization, etc.
+// or just import a crate.
+fn add(v1: &Vec<f32>, v2: &Vec<f32>) -> Vec<f32> {
+    let mut sum = vec![];
+    let n = v1.len();
+    for i in 0..n {
+        sum.push(v1[i] + v2[i]);
+    }
+    sum
+}
+fn sub(v1: &Vec<f32>, v2: &Vec<f32>) -> Vec<f32> {
+    let mut sum = vec![];
+    let n = v1.len();
+    for i in 0..n {
+        sum.push(v1[i] - v2[i]);
+    }
+    sum
+}
+fn scale(v1: &Vec<f32>, s: f32) -> Vec<f32> {
+    let mut v2 = vec![];
+    let n = v1.len();
+    for i in 0..n {
+        v2.push(v1[i] * s);
+    }
+    v2
+}
+fn dot(v1: &Vec<f32>, v2: &Vec<f32>) -> f32 {
+    let mut sum = 0.0;
+    let n = v1.len();
+    for i in 0..n {
+        sum += v1[i] * v2[i];
+    }
+    sum
+}
+fn norm(v1: &Vec<f32>) -> f32 {
+    dot(v1, v1).pow(0.5)
 }
 
 fn model(app: &App) -> Model { 
@@ -115,7 +133,7 @@ fn model(app: &App) -> Model {
     let boundary = app.window_rect();
     let mut particles = vec![];
 
-    for _ in 0..7 {
+    for _ in 0..10 {
         particles.push(Particle::new_rand(
             boundary.left(), boundary.right(),
             boundary.top(), boundary.bottom(),
@@ -156,28 +174,47 @@ fn in_bounds(app: &App, particle: &Particle) -> Option<Dim> {
 
 fn collisions(model: &mut Model) {
     // this is kinda wacky and can be handled much better...
+    // also assuming we dont have triple collisions...
+    // TODO: learn to handle this with mutexes / locks...
     let n_particles = model.particles.len();
     let mut particles_copy = model.particles.clone();
+
+    let mut collided: Vec<(usize, usize)> = vec![];
 
     for i in 0..n_particles {
         for j in (i+1)..n_particles {
             if model.particles[i].collides(&particles_copy[j]) {
-                model.particles[i].smash(&mut particles_copy[j])
+                model.particles[i].smash(&mut particles_copy[j]);
+                collided.push((i,j));
             }
         }
+    }
+    for pair in collided.into_iter() {
+        model.particles[pair.1] = particles_copy[pair.1].clone();
     }
 }
 
 fn update(app: &App, model: &mut Model, _update: Update) {
     for particle in &mut model.particles {
         // Keep a log of the time since starting
-        let dx = random_range(-0.1, 0.1);
-        let dy = random_range(-0.1, 0.1);
+        let dx = random_range(-0.5, 0.5);
+        let dy = random_range(-0.5, 0.5);
 
         particle.x += particle.vx;
         particle.y += particle.vy;
         particle.vx += dx;
         particle.vy += dy;
+
+        if particle.vx > 30.0 {
+            particle.vx = 30.0;
+        } else if particle.vx < -30.0 {
+            particle.vx = -30.0;
+        }
+        if particle.vy > 30.0 {
+            particle.vy = 30.0;
+        } else if particle.vy < -30.0 {
+            particle.vy = -30.0;
+        }
 
         match in_bounds(app,&particle) {
             Some(dim) => bounce(app, particle, dim),
