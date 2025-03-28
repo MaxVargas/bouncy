@@ -1,3 +1,4 @@
+pub mod vec;
 use nannou::prelude::*;
 
 fn main() {
