@@ -3,7 +3,7 @@ use std::ops;
 // https://codereview.stackexchange.com/questions/256345/n-dimensional-array-in-rust
 #[derive(PartialEq,Debug)]
 pub struct VecNd<const N: usize> {
-    data: Vec<f32>,
+    pub data: Vec<f32>,
 }
 
 impl<const N: usize> VecNd<N> {

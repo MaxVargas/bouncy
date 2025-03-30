@@ -58,18 +58,18 @@ impl Particle {
         let m1 = self.mass();
         let m2 = particle.mass();
 
-        let v1 = vec![self.vx, self.vy];
-        let x1 = vec![self.x, self.y];
-        let v2 = vec![particle.vx, particle.vy];
-        let x2 = vec![particle.x, particle.y];
+        let v1 = VecNd::<2>::from_vec(vec![self.vx, self.vy]);
+        let x1 = VecNd::<2>::from_vec(vec![self.x, self.y]);
+        let v2 = VecNd::<2>::from_vec(vec![particle.vx, particle.vy]);
+        let x2 = VecNd::<2>::from_vec(vec![particle.x, particle.y]);
 
-        let v1_new = eval(&v1,&v2,&x1,&x2,m1,m2);
-        let v2_new = eval(&v2,&v1,&x2,&x1,m2,m1);
+        let v1_new = eval_(&v1,&v2,&x1,&x2,m1,m2);
+        let v2_new = eval_(&v2,&v1,&x2,&x1,m2,m1);
 
-        self.vx = v1_new[0];
-        self.vy = v1_new[1];
-        particle.vx = v2_new[0];
-        particle.vy = v2_new[1];
+        self.vx = v1_new.data[0];
+        self.vy = v1_new.data[1];
+        particle.vx = v2_new.data[0];
+        particle.vy = v2_new.data[1];
 
     }
     fn mass(&self) -> f32 {
@@ -82,13 +82,12 @@ fn eval_ <const N: usize> (
     x1: &VecNd<N>, x2: &VecNd<N>, 
     m1: f32, m2: f32
 ) -> VecNd<N> {
-    //let a = (2.0 * m2) / (m1 + m2);
-    //let b = (*v1 - *v2).dot(&(*x1 - *x2)) / ((*x2 - *x1).norm().pow(2));
-    //let c = (a*b) * (*x1 - *x2);
+    let a = (2.0 * m2) / (m1 + m2);
+    let b = (v1 - v2).dot(&(x1 - x2)) / ((x2 - x1).norm().pow(2));
+    let c = (a*b) * &(x1 - x2);
 
-    VecNd::<N>::zero()
+    v1 - &c
 }
-
 
 fn eval(
     v1: &Vec<f32>, v2: &Vec<f32>, 
