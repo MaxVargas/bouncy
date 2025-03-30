@@ -1,6 +1,13 @@
 pub mod vec;
+pub mod geom;
+//pub mod particles;
+
+use crate::{
+    vec::*,
+    geom::*,
+    //particles::*,
+};
 use nannou::prelude::*;
-use crate::vec::*;
 
 fn main() {
     nannou::app(model).update(update).run();
@@ -18,11 +25,6 @@ struct Particle {
     vx: f32,
     vy: f32,
     radius: f32,
-}
-
-enum Dim {
-    X,
-    Y,
 }
 
 impl Particle {
