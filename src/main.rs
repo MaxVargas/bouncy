@@ -63,8 +63,8 @@ impl Particle {
         let v2 = VecNd::<2>::from_vec(vec![particle.vx, particle.vy]);
         let x2 = VecNd::<2>::from_vec(vec![particle.x, particle.y]);
 
-        let v1_new = eval_(&v1,&v2,&x1,&x2,m1,m2);
-        let v2_new = eval_(&v2,&v1,&x2,&x1,m2,m1);
+        let v1_new = eval(&v1,&v2,&x1,&x2,m1,m2);
+        let v2_new = eval(&v2,&v1,&x2,&x1,m2,m1);
 
         self.vx = v1_new.data[0];
         self.vy = v1_new.data[1];
@@ -87,57 +87,6 @@ fn eval_ <const N: usize> (
     let c = (a*b) * &(x1 - x2);
 
     v1 - &c
-}
-
-fn eval(
-    v1: &Vec<f32>, v2: &Vec<f32>, 
-    x1: &Vec<f32>, x2: &Vec<f32>, 
-    m1: f32, m2: f32
-) -> Vec<f32> {
-    let a = (2.0 * m2) / (m1 + m2);
-    let b = dot(&sub(&v1,&v2),&sub(&x1,&x2))/(norm(&sub(&x2,&x1)).pow(2));
-    let c = scale(&sub(&x1,&x2), a*b);
-
-    sub(v1, &c)
-}
-
-// TODO: clean this up by creating some vec2d type
-// which implements addition, dot product, normalization, etc.
-// or just import a crate.
-fn add(v1: &Vec<f32>, v2: &Vec<f32>) -> Vec<f32> {
-    let mut sum = vec![];
-    let n = v1.len();
-    for i in 0..n {
-        sum.push(v1[i] + v2[i]);
-    }
-    sum
-}
-fn sub(v1: &Vec<f32>, v2: &Vec<f32>) -> Vec<f32> {
-    let mut sum = vec![];
-    let n = v1.len();
-    for i in 0..n {
-        sum.push(v1[i] - v2[i]);
-    }
-    sum
-}
-fn scale(v1: &Vec<f32>, s: f32) -> Vec<f32> {
-    let mut v2 = vec![];
-    let n = v1.len();
-    for i in 0..n {
-        v2.push(v1[i] * s);
-    }
-    v2
-}
-fn dot(v1: &Vec<f32>, v2: &Vec<f32>) -> f32 {
-    let mut sum = 0.0;
-    let n = v1.len();
-    for i in 0..n {
-        sum += v1[i] * v2[i];
-    }
-    sum
-}
-fn norm(v1: &Vec<f32>) -> f32 {
-    dot(v1, v1).pow(0.5)
 }
 
 fn model(app: &App) -> Model { 
