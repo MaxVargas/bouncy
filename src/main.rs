@@ -1,5 +1,6 @@
 pub mod vec;
 use nannou::prelude::*;
+use crate::vec::*;
 
 fn main() {
     nannou::app(model).update(update).run();
@@ -75,6 +76,19 @@ impl Particle {
         self.radius.pow(2) / (100.0 as f32)
     }
 }
+
+fn eval_ <const N: usize> (
+    v1: &VecNd<N>, v2: &VecNd<N>,
+    x1: &VecNd<N>, x2: &VecNd<N>, 
+    m1: f32, m2: f32
+) -> VecNd<N> {
+    //let a = (2.0 * m2) / (m1 + m2);
+    //let b = (*v1 - *v2).dot(&(*x1 - *x2)) / ((*x2 - *x1).norm().pow(2));
+    //let c = (a*b) * (*x1 - *x2);
+
+    VecNd::<N>::zero()
+}
+
 
 fn eval(
     v1: &Vec<f32>, v2: &Vec<f32>, 
