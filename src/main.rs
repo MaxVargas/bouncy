@@ -77,7 +77,7 @@ impl Particle {
     }
 }
 
-fn eval_ <const N: usize> (
+fn eval <const N: usize> (
     v1: &VecNd<N>, v2: &VecNd<N>,
     x1: &VecNd<N>, x2: &VecNd<N>, 
     m1: f32, m2: f32
